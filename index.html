@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kalkulator Integral Metode Simpson</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary: #4CAF50;
+      --accent: #e8f5e9;
+      --text: #333;
+      --background: #f9f9f9;
+      --card: #ffffff;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--background);
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      background: var(--card);
+      padding: 40px;
+      border-radius: 16px;
+      max-width: 900px;
+      margin: auto;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--text);
+      font-size: 28px;
+      margin-bottom: 30px;
+    }
+
+    label {
+      font-weight: 600;
+      margin-top: 20px;
+      color: var(--text);
+      display: block;
+    }
+
+    textarea, button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 8px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+
+    button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      margin-top: 20px;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #388e3c;
+    }
+
+    .result {
+      background: var(--accent);
+      padding: 25px;
+      margin-top: 30px;
+      border-radius: 12px;
+      display: none;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .data-list p {
+      margin: 6px 0;
+    }
+
+    canvas {
+      margin-top: 40px;
+    }
+
+    .toggle-method {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+      margin-bottom: 30px;
+      border-radius: 12px;
+      overflow: hidden;
+      background-color: #e0e0e0;
+      position: relative;
+    }
+
+    .toggle-method input[type="radio"] {
+      display: none;
+    }
+
+    .toggle-method label {
+      flex: 1;
+      text-align: center;
+      padding: 14px 0;
+      font-weight: 600;
+      font-size: 18px;
+      color: #555;
+      cursor: pointer;
+      transition: color 0.3s ease;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .toggle-indicator {
+      position: absolute;
+      width: 50%;
+      height: 100%;
+      background-color: var(--primary);
+      border-radius: 12px;
+      transition: transform 0.3s ease;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+
+    #simpson38:checked ~ .toggle-indicator {
+      transform: translateX(100%);
+    }
+
+    .toggle-method input[type="radio"]:checked + label {
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Kalkulator Integral Metode Simpson</h1>
+
+    <label>Pilih Metode:</label>
+    <div class="toggle-method">
+      <input type="radio" name="method" id="simpson13" value="simpson13" checked />
+      <label for="simpson13">Simpson 1/3</label>
+
+      <input type="radio" name="method" id="simpson38" value="simpson38" />
+      <label for="simpson38">Simpson 3/8</label>
+
+      <div class="toggle-indicator"></div>
+    </div>
+
+    <label for="xVals">Input nilai x (dipisahkan koma):</label>
+    <textarea id="xVals" rows="2" placeholder="Contoh: 0,1,2,3,4,5,6"></textarea>
+
+    <label for="fxVals">Input nilai f(x) (dipisahkan koma):</label>
+    <textarea id="fxVals" rows="3" placeholder="Contoh: 1.2,2.4,3.6,4.8,6.0,7.2,8.4"></textarea>
+
+    <button onclick="hitungSimpson()">Hitung Integral</button>
+
+    <div id="output" class="result"></div>
+    <canvas id="simpsonChart" width="600" height="300"></canvas>
+  </div>
+
+  <script>
+    let chart;
+
+    function hitungSimpson() {
+      const method = document.querySelector('input[name="method"]:checked').value;
+      const xInput = document.getElementById("xVals").value;
+      const fxInput = document.getElementById("fxVals").value;
+      const x = xInput.split(",").map(Number);
+      const fx = fxInput.split(",").map(Number);
+      const n = fx.length;
+
+      if (x.length !== fx.length) {
+        alert("Jumlah nilai x dan f(x) harus sama.");
+        return;
+      }
+
+      const h = x[1] - x[0];
+      for (let i = 1; i < x.length - 1; i++) {
+        if (Math.abs((x[i + 1] - x[i]) - h) > 1e-6) {
+          alert("Interval antar nilai x harus konstan.");
+          return;
+        }
+      }
+
+      const output = document.getElementById("output");
+      output.innerHTML = '<div class="data-list"><strong>Data Diketahui:</strong>';
+      output.innerHTML += `<p>Jumlah titik data: ${n}</p>`;
+      output.innerHTML += `<p>Jumlah subinterval (n): ${n - 1}</p>`;
+      output.innerHTML += `<p>Lebar interval (h): ${h}</p>`;
+      for (let i = 0; i < n; i++) {
+        output.innerHTML += `<p>f(x${i}) = ${fx[i]}</p>`;
+      }
+
+      let result = 0;
+
+      if (method === "simpson13") {
+        if ((n - 1) % 2 !== 0) {
+          alert("Jumlah titik harus ganjil (subinterval genap) untuk metode Simpson 1/3.");
+          return;
+        }
+        let sum = fx[0] + fx[n - 1];
+        for (let i = 1; i < n - 1; i++) {
+          sum += (i % 2 === 0) ? 2 * fx[i] : 4 * fx[i];
+        }
+        result = (h / 3) * sum;
+        output.innerHTML += `<p><strong>Hasil Integral (Simpson 1/3):</strong> ${result.toFixed(2)}</p>`;
+        output.innerHTML += `<p><strong>Rumus:</strong> ∫f(x)dx ≈ (h / 3) [f(x₀) + 4f(x₁) + 2f(x₂) + ... + f(xₙ)]</p>`;
+      } else if (method === "simpson38") {
+        if ((n - 1) % 3 !== 0) {
+          alert("Jumlah subinterval harus kelipatan 3 untuk metode Simpson 3/8.");
+          return;
+        }
+        let sum = fx[0] + fx[n - 1];
+        for (let i = 1; i < n - 1; i++) {
+          if (i % 3 === 0) {
+            sum += 2 * fx[i];
+          } else {
+            sum += 3 * fx[i];
+          }
+        }
+        result = (3 * h / 8) * sum;
+        output.innerHTML += `<p><strong>Hasil Integral (Simpson 3/8):</strong> ${result.toFixed(2)}</p>`;
+        output.innerHTML += `<p><strong>Rumus:</strong> ∫f(x)dx ≈ (3h / 8) [f(x₀) + 3f(x₁) + 3f(x₂) + 2f(x₃) + ... + f(xₙ)]</p>`;
+      }
+
+      output.innerHTML += '</div>';
+      output.style.display = "block";
+
+      if (chart) chart.destroy();
+      const ctx = document.getElementById("simpsonChart").getContext("2d");
+      chart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: x,
+          datasets: [{
+            label: "f(x)",
+            data: fx,
+            fill: true,
+            borderColor: "rgba(75, 192, 192, 1)",
+            backgroundColor: "rgba(75, 192, 192, 0.2)",
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Grafik f(x) terhadap x' }
+          },
+          scales: {
+            x: { title: { display: true, text: "x" } },
+            y: { title: { display: true, text: "f(x)" } }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
