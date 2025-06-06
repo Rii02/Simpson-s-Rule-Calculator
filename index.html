@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Kalkulator Integral Metode Simpson</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <style>
     :root {
       --primary: #4CAF50;
@@ -157,6 +158,9 @@
     <label for="fxVals">Input nilai f(x) (dipisahkan koma):</label>
     <textarea id="fxVals" rows="3"></textarea>
 
+    <label>Upload File Excel/CSV:</label>
+    <input type="file" id="fileUpload" accept=".xlsx, .xls, .csv" onchange="handleFile(event)" />
+
     <button onclick="hitungSimpson()">Hitung Integral</button>
 
     <div id="output" class="result"></div>
@@ -258,6 +262,38 @@
           }
         }
       });
+    }
+
+    function handleFile(event) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+        // Asumsikan format: kolom pertama = x, kolom kedua = f(x)
+        const xData = [];
+        const fxData = [];
+
+        jsonData.forEach((row, index) => {
+          if (row.length >= 2 && !isNaN(row[0]) && !isNaN(row[1])) {
+            xData.push(row[0]);
+            fxData.push(row[1]);
+          }
+        });
+
+        // Set ke textarea otomatis
+        document.getElementById("xVals").value = xData.join(",");
+        document.getElementById("fxVals").value = fxData.join(",");
+
+        alert("Data berhasil dimuat dari file!");
+      };
+
+      reader.readAsArrayBuffer(file);
     }
   </script>
 </body>
