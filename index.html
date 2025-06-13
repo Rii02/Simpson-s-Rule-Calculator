@@ -6,36 +6,38 @@
   <title>Kalkulator Integral Metode Simpson</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #4CAF50;
-      --accent: #e8f5e9;
-      --text: #333;
-      --background: #f9f9f9;
+      --primary: #1e88e5;  /* biru elegan */
+      --primary-dark: #1565c0;
+      --accent: #e3f2fd;
+      --text: #1a237e;
+      --background: #f4faff;
       --card: #ffffff;
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Poppins', sans-serif;
       background: var(--background);
       margin: 0;
-      padding: 20px;
+      padding: 30px;
     }
 
     .container {
       background: var(--card);
       padding: 40px;
-      border-radius: 16px;
+      border-radius: 18px;
       max-width: 900px;
       margin: auto;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
     }
 
     h1 {
       text-align: center;
-      color: var(--text);
-      font-size: 28px;
-      margin-bottom: 30px;
+      color: var(--primary);
+      font-size: 30px;
+      margin-bottom: 40px;
     }
 
     label {
@@ -45,27 +47,35 @@
       display: block;
     }
 
-    textarea, button {
+    textarea, input[type="file"], button {
       width: 100%;
       padding: 14px;
       margin-top: 8px;
       border-radius: 10px;
       border: 1px solid #ccc;
-      box-sizing: border-box;
       font-size: 16px;
+      box-sizing: border-box;
+      transition: 0.2s ease;
+    }
+
+    textarea:focus, input[type="file"]:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 6px rgba(30, 136, 229, 0.4);
     }
 
     button {
       background-color: var(--primary);
       color: white;
       border: none;
-      margin-top: 20px;
+      margin-top: 24px;
       font-weight: bold;
+      cursor: pointer;
       transition: background 0.3s ease;
     }
 
     button:hover {
-      background-color: #388e3c;
+      background-color: var(--primary-dark);
     }
 
     .result {
@@ -75,6 +85,7 @@
       border-radius: 12px;
       display: none;
       font-size: 16px;
+      color: #0d47a1;
       line-height: 1.6;
     }
 
