@@ -6,248 +6,682 @@
   <title>Kalkulator Integral Metode Simpson</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     :root {
-      --primary: #1e88e5;  /* biru elegan */
-      --primary-dark: #1565c0;
-      --accent: #e3f2fd;
-      --text: #1a237e;
-      --background: #f4faff;
+      --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --primary-solid: #667eea;
+      --primary-dark: #5a67d8;
+      --secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --text-primary: #2d3748;
+      --text-secondary: #4a5568;
+      --text-light: #718096;
+      --background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       --card: #ffffff;
+      --border: #e2e8f0;
+      --shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      --shadow-hover: 0 25px 50px rgba(0, 0, 0, 0.15);
+      --border-radius: 16px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     body {
-      font-family: 'Poppins', sans-serif;
+      font-family: 'Inter', sans-serif;
       background: var(--background);
-      margin: 0;
-      padding: 30px;
+      min-height: 100vh;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    .background-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background: var(--background);
+    }
+
+    .background-animation::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+      animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(180deg); }
     }
 
     .container {
       background: var(--card);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       padding: 40px;
-      border-radius: 18px;
-      max-width: 900px;
-      margin: auto;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
-    }
-
-    h1 {
-      text-align: center;
-      color: var(--primary);
-      font-size: 30px;
-      margin-bottom: 40px;
-    }
-
-    label {
-      font-weight: 600;
-      margin-top: 20px;
-      color: var(--text);
-      display: block;
-    }
-
-    textarea, input[type="file"], button {
-      width: 100%;
-      padding: 14px;
-      margin-top: 8px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-      box-sizing: border-box;
-      transition: 0.2s ease;
-    }
-
-    textarea:focus, input[type="file"]:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 6px rgba(30, 136, 229, 0.4);
-    }
-
-    button {
-      background-color: var(--primary);
-      color: white;
-      border: none;
-      margin-top: 24px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-
-    button:hover {
-      background-color: var(--primary-dark);
-    }
-
-    .result {
-      background: var(--accent);
-      padding: 25px;
-      margin-top: 30px;
-      border-radius: 12px;
-      display: none;
-      font-size: 16px;
-      color: #0d47a1;
-      line-height: 1.6;
-    }
-
-    .data-list p {
-      margin: 6px 0;
-    }
-
-    canvas {
-      margin-top: 40px;
-    }
-
-    .toggle-method {
-      display: flex;
-      justify-content: center;
-      margin-top: 10px;
-      margin-bottom: 30px;
-      border-radius: 12px;
+      border-radius: 24px;
+      max-width: 1000px;
+      margin: 0 auto;
+      box-shadow: var(--shadow);
+      position: relative;
       overflow: hidden;
-      background-color: #e0e0e0;
+      transition: var(--transition);
+    }
+
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--primary);
+      border-radius: 24px 24px 0 0;
+    }
+
+    .container:hover {
+      box-shadow: var(--shadow-hover);
+      transform: translateY(-5px);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
       position: relative;
     }
 
-    .toggle-method input[type="radio"] {
-      display: none;
+    .header h1 {
+      background: var(--primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: -0.5px;
     }
 
-    .toggle-method label {
-      flex: 1;
-      text-align: center;
-      padding: 14px 0;
+    .header p {
+      color: var(--text-light);
+      font-size: 1.1rem;
+      font-weight: 400;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .form-group {
+      position: relative;
+    }
+
+    .form-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       font-weight: 600;
-      font-size: 18px;
-      color: #555;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      font-size: 0.95rem;
+    }
+
+    .form-group label i {
+      color: var(--primary-solid);
+      font-size: 1.1rem;
+    }
+
+    .method-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+
+    .method-option {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .method-option input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
       cursor: pointer;
-      transition: color 0.3s ease;
-      z-index: 1;
+      z-index: 2;
+    }
+
+    .method-option label {
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: 10px;
+      padding: 16px 20px;
+      background: #f8fafc;
+      border: 2px solid var(--border);
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: var(--transition);
+      font-weight: 500;
+      color: var(--text-secondary);
+      position: relative;
+      z-index: 1;
     }
 
-    .toggle-indicator {
+    .method-option input[type="radio"]:checked + label {
+      background: var(--primary);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 16px 20px;
+      border: 2px solid var(--border);
+      border-radius: var(--border-radius);
+      font-size: 1rem;
+      font-family: 'Inter', sans-serif;
+      background: #f8fafc;
+      color: var(--text-primary);
+      transition: var(--transition);
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: var(--primary-solid);
+      background: white;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .file-input {
       position: absolute;
-      width: 50%;
+      opacity: 0;
+      width: 100%;
       height: 100%;
-      background-color: var(--primary);
-      border-radius: 12px;
-      transition: transform 0.3s ease;
+      cursor: pointer;
+    }
+
+    .file-input-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+      border: 2px dashed var(--border);
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: var(--transition);
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .file-input-label:hover {
+      border-color: var(--primary-solid);
+      background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%);
+      transform: translateY(-2px);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 18px 32px;
+      border-radius: var(--border-radius);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+      width: 100%;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-primary:active {
+      transform: translateY(-1px);
+    }
+
+    .result-card {
+      background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--border-radius);
+      padding: 32px;
+      margin-top: 32px;
+      display: none;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result-card::before {
+      content: '';
+      position: absolute;
       top: 0;
       left: 0;
-      z-index: 0;
+      right: 0;
+      height: 3px;
+      background: var(--accent);
     }
 
-    #simpson38:checked ~ .toggle-indicator {
-      transform: translateX(100%);
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
     }
 
-    .toggle-method input[type="radio"]:checked + label {
+    .result-header h3 {
+      background: var(--accent);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+
+    .result-content {
+      display: grid;
+      gap: 16px;
+    }
+
+    .result-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      transition: var(--transition);
+    }
+
+    .result-item:hover {
+      border-color: var(--primary-solid);
+      transform: translateY(-1px);
+    }
+
+    .result-label {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .result-value {
+      color: var(--text-primary);
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .integral-result {
+      background: var(--primary);
       color: white;
+      padding: 20px;
+      border-radius: var(--border-radius);
+      text-align: center;
+      margin: 20px 0;
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    .integral-result .value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .integral-result .label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .formula-box {
+      background: linear-gradient(135deg, #fef5e7 0%, #fefcf3 100%);
+      border: 1px solid #f6e05e;
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin: 20px 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      color: #744210;
+      text-align: center;
+    }
+
+    .chart-container {
+      margin-top: 32px;
+      padding: 32px;
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      min-height: 500px;
+      position: relative;
+    }
+
+    .chart-container canvas {
+      min-height: 400px !important;
+      width: 100% !important;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+      color: var(--text-light);
+    }
+
+    .loading.show {
+      display: block;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      border-top-color: var(--primary-solid);
+      animation: spin 1s linear infinite;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 24px;
+        margin: 10px;
+      }
+      
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      .method-selector {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-container {
+        padding: 20px;
+        min-height: 400px;
+      }
+
+      .chart-container canvas {
+        min-height: 300px !important;
+      }
+    }
+
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
     }
   </style>
 </head>
 <body>
+  <div class="background-animation"></div>
+  
   <div class="container">
-    <h1>Kalkulator Integral Metode Simpson</h1>
-
-    <label>Pilih Metode:</label>
-    <div class="toggle-method">
-      <input type="radio" name="method" id="simpson13" value="simpson13" checked />
-      <label for="simpson13">Simpson 1/3</label>
-
-      <input type="radio" name="method" id="simpson38" value="simpson38" />
-      <label for="simpson38">Simpson 3/8</label>
-
-      <div class="toggle-indicator"></div>
+    <div class="header">
+      <h1><i class="fas fa-calculator"></i> Kalkulator Integral Simpson</h1>
+      <p>Menghitung integral numerik dengan metode Simpson 1/3 dan 3/8</p>
     </div>
 
-    <label for="xVals">Input nilai x (dipisahkan koma):</label>
-    <textarea id="xVals" rows="2"></textarea>
+    <div class="form-grid">
+      <div class="form-group">
+        <label><i class="fas fa-cogs"></i> Pilih Metode Perhitungan:</label>
+        <div class="method-selector">
+          <div class="method-option">
+            <input type="radio" name="method" id="simpson13" value="simpson13" checked />
+            <label for="simpson13">
+              Simpson 1/3
+            </label>
+          </div>
+          <div class="method-option">
+            <input type="radio" name="method" id="simpson38" value="simpson38" />
+            <label for="simpson38">
+              Simpson 3/8
+            </label>
+          </div>
+        </div>
+      </div>
 
-    <label for="fxVals">Input nilai f(x) (dipisahkan koma):</label>
-    <textarea id="fxVals" rows="3"></textarea>
+      <div class="form-group">
+        <label><i class="fas fa-chart-line"></i> Nilai x (dipisahkan koma):</label>
+        <textarea id="xVals" class="input-field" rows="2" ></textarea>
+      </div>
 
-    <label>Upload File Excel/CSV:</label>
-    <input type="file" id="fileUpload" accept=".xlsx, .xls, .csv" onchange="handleFile(event)" />
+      <div class="form-group">
+        <label><i class="fas fa-function"></i> Nilai f(x) (dipisahkan koma):</label>
+        <textarea id="fxVals" class="input-field" rows="3" ></textarea>
+      </div>
 
-    <button onclick="hitungSimpson()">Hitung Integral</button>
+      <div class="form-group">
+        <label><i class="fas fa-file-upload"></i> Upload File Excel/CSV (Opsional):</label>
+        <div class="file-input-wrapper">
+          <input type="file" id="fileUpload" class="file-input" accept=".xlsx, .xls, .csv" onchange="handleFile(event)" />
+          <label for="fileUpload" class="file-input-label">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span>Pilih file atau drag & drop</span>
+          </label>
+        </div>
+      </div>
+    </div>
 
-    <div id="output" class="result"></div>
-    <canvas id="simpsonChart" width="600" height="300"></canvas>
+    <button class="btn-primary" onclick="hitungSimpson()">
+      <i class="fas fa-calculator"></i>
+      Hitung Integral
+    </button>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      Menghitung integral...
+    </div>
+
+    <div id="output" class="result-card"></div>
+    
+    <div class="chart-container" id="chartContainer" style="display: none;">
+      <canvas id="simpsonChart"></canvas>
+    </div>
   </div>
 
   <script>
     let chart;
 
+    function showLoading() {
+      document.getElementById('loading').classList.add('show');
+    }
+
+    function hideLoading() {
+      document.getElementById('loading').classList.remove('show');
+    }
+
     function hitungSimpson() {
-      const method = document.querySelector('input[name="method"]:checked').value;
-      const xInput = document.getElementById("xVals").value;
-      const fxInput = document.getElementById("fxVals").value;
-      const x = xInput.split(",").map(Number);
-      const fx = fxInput.split(",").map(Number);
-      const n = fx.length;
-
-      if (x.length !== fx.length) {
-        alert("Jumlah nilai x dan f(x) harus sama.");
-        return;
-      }
-
-      const h = x[1] - x[0];
-      for (let i = 1; i < x.length - 1; i++) {
-        if (Math.abs((x[i + 1] - x[i]) - h) > 1e-6) {
-          alert("Interval antar nilai x harus konstan.");
+      showLoading();
+      
+      setTimeout(() => {
+        const method = document.querySelector('input[name="method"]:checked').value;
+        const xInput = document.getElementById("xVals").value;
+        const fxInput = document.getElementById("fxVals").value;
+        
+        if (!xInput.trim() || !fxInput.trim()) {
+          alert("Mohon masukkan nilai x dan f(x).");
+          hideLoading();
           return;
         }
-      }
 
-      const output = document.getElementById("output");
-      output.innerHTML = '<div class="data-list"><strong>Data Diketahui:</strong>';
-      output.innerHTML += `<p>Jumlah titik data: ${n}</p>`;
-      output.innerHTML += `<p>Jumlah subinterval (n): ${n - 1}</p>`;
-      output.innerHTML += `<p>Lebar interval (h): ${h}</p>`;
-      for (let i = 0; i < n; i++) {
-        output.innerHTML += `<p>f(x${i}) = ${fx[i]}</p>`;
-      }
+        const x = xInput.split(",").map(val => parseFloat(val.trim()));
+        const fx = fxInput.split(",").map(val => parseFloat(val.trim()));
+        const n = fx.length;
 
-      let result = 0;
-
-      if (method === "simpson13") {
-        if ((n - 1) % 2 !== 0) {
-          alert("Jumlah titik harus ganjil (subinterval genap) untuk metode Simpson 1/3.");
+        if (x.length !== fx.length) {
+          alert("Jumlah nilai x dan f(x) harus sama.");
+          hideLoading();
           return;
         }
-        let sum = fx[0] + fx[n - 1];
-        for (let i = 1; i < n - 1; i++) {
-          sum += (i % 2 === 0) ? 2 * fx[i] : 4 * fx[i];
-        }
-        result = (h / 3) * sum;
-        output.innerHTML += `<p><strong>Hasil Integral (Simpson 1/3):</strong> ${result.toFixed(2)}</p>`;
-        output.innerHTML += `<p><strong>Rumus:</strong> ∫f(x)dx ≈ (h / 3) [f(x₀) + 4f(x₁) + 2f(x₂) + ... + f(xₙ)]</p>`;
-      } else if (method === "simpson38") {
-        if ((n - 1) % 3 !== 0) {
-          alert("Jumlah subinterval harus kelipatan 3 untuk metode Simpson 3/8.");
+
+        if (x.some(isNaN) || fx.some(isNaN)) {
+          alert("Pastikan semua nilai adalah angka yang valid.");
+          hideLoading();
           return;
         }
-        let sum = fx[0] + fx[n - 1];
-        for (let i = 1; i < n - 1; i++) {
-          if (i % 3 === 0) {
-            sum += 2 * fx[i];
-          } else {
-            sum += 3 * fx[i];
+
+        const h = x[1] - x[0];
+        for (let i = 1; i < x.length - 1; i++) {
+          if (Math.abs((x[i + 1] - x[i]) - h) > 1e-6) {
+            alert("Interval antar nilai x harus konstan.");
+            hideLoading();
+            return;
           }
         }
-        result = (3 * h / 8) * sum;
-        output.innerHTML += `<p><strong>Hasil Integral (Simpson 3/8):</strong> ${result.toFixed(2)}</p>`;
-        output.innerHTML += `<p><strong>Rumus:</strong> ∫f(x)dx ≈ (3h / 8) [f(x₀) + 3f(x₁) + 3f(x₂) + 2f(x₃) + ... + f(xₙ)]</p>`;
-      }
 
-      output.innerHTML += '</div>';
-      output.style.display = "block";
+        const output = document.getElementById("output");
+        
+        let resultHTML = `
+          <div class="result-header">
+            <i class="fas fa-chart-bar"></i>
+            <h3>Hasil Perhitungan</h3>
+          </div>
+          <div class="result-content">
+            <div class="result-item">
+              <span class="result-label">Jumlah titik data:</span>
+              <span class="result-value">${n}</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Jumlah subinterval (n):</span>
+              <span class="result-value">${n - 1}</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Lebar interval (h):</span>
+              <span class="result-value">${parseFloat(h.toFixed(10))}</span>
+            </div>
+        `;
 
+        for (let i = 0; i < Math.min(n, 10); i++) {
+          resultHTML += `
+            <div class="result-item">
+              <span class="result-label">f(x₀${i}):</span>
+              <span class="result-value">${fx[i]}</span>
+            </div>
+          `;
+        }
+
+        if (n > 10) {
+          resultHTML += `
+            <div class="result-item">
+              <span class="result-label">... dan ${n - 10} data lainnya</span>
+              <span class="result-value"></span>
+            </div>
+          `;
+        }
+
+        let result = 0;
+        let methodName = "";
+        let formula = "";
+
+        if (method === "simpson13") {
+          if ((n - 1) % 2 !== 0) {
+            alert("Jumlah titik harus ganjil (subinterval genap) untuk metode Simpson 1/3.");
+            hideLoading();
+            return;
+          }
+          let sum = fx[0] + fx[n - 1];
+          for (let i = 1; i < n - 1; i++) {
+            sum += (i % 2 === 0) ? 2 * fx[i] : 4 * fx[i];
+          }
+          result = (h / 3) * sum;
+          methodName = "Simpson 1/3";
+          formula = "∫f(x)dx ≈ (h/3)[f(x₀) + 4f(x₁) + 2f(x₂) + 4f(x₃) + ... + f(xₙ)]";
+        } else if (method === "simpson38") {
+          if ((n - 1) % 3 !== 0) {
+            alert("Jumlah subinterval harus kelipatan 3 untuk metode Simpson 3/8.");
+            hideLoading();
+            return;
+          }
+          let sum = fx[0] + fx[n - 1];
+          for (let i = 1; i < n - 1; i++) {
+            if (i % 3 === 0) {
+              sum += 2 * fx[i];
+            } else {
+              sum += 3 * fx[i];
+            }
+          }
+          result = (3 * h / 8) * sum;
+          methodName = "Simpson 3/8";
+          formula = "∫f(x)dx ≈ (3h/8)[f(x₀) + 3f(x₁) + 3f(x₂) + 2f(x₃) + ... + f(xₙ)]";
+        }
+
+        resultHTML += `
+          </div>
+          <div class="integral-result">
+            <div class="value">${result.toFixed(6)}</div>
+            <div class="label">Hasil Integral (${methodName})</div>
+          </div>
+          <div class="formula-box">
+            <strong>Rumus:</strong><br>
+            ${formula}
+          </div>
+        `;
+
+        output.innerHTML = resultHTML;
+        output.style.display = "block";
+
+        // Animasi hasil
+        output.classList.add('pulse');
+        setTimeout(() => output.classList.remove('pulse'), 2000);
+
+        // Grafik
+        createChart(x, fx, methodName);
+        
+        hideLoading();
+      }, 500);
+    }
+
+    function createChart(x, fx, methodName) {
+      const chartContainer = document.getElementById('chartContainer');
+      chartContainer.style.display = 'block';
+      
       if (chart) chart.destroy();
+      
       const ctx = document.getElementById("simpsonChart").getContext("2d");
+      
       chart = new Chart(ctx, {
         type: "line",
         data: {
@@ -256,20 +690,108 @@
             label: "f(x)",
             data: fx,
             fill: true,
-            borderColor: "rgba(75, 192, 192, 1)",
-            backgroundColor: "rgba(75, 192, 192, 0.2)",
-            tension: 0.3
+            borderColor: "rgba(102, 126, 234, 1)",
+            backgroundColor: "rgba(102, 126, 234, 0.1)",
+            borderWidth: 3,
+            pointBackgroundColor: "rgba(102, 126, 234, 1)",
+            pointBorderColor: "#fff",
+            pointBorderWidth: 3,
+            pointRadius: 8,
+            pointHoverRadius: 12,
+            tension: 0.4
           }]
         },
         options: {
           responsive: true,
+          maintainAspectRatio: false,
+          layout: {
+            padding: 20
+          },
           plugins: {
-            legend: { position: 'top' },
-            title: { display: true, text: 'Grafik f(x) terhadap x' }
+            legend: {
+              position: 'top',
+              labels: {
+                usePointStyle: true,
+                font: {
+                  family: 'Inter',
+                  size: 14,
+                  weight: '500'
+                },
+                padding: 20
+              }
+            },
+            title: {
+              display: true,
+              text: `Grafik f(x) - Metode ${methodName}`,
+              font: {
+                family: 'Inter',
+                size: 18,
+                weight: '600'
+              },
+              color: '#2d3748',
+              padding: {
+                top: 10,
+                bottom: 30
+              }
+            }
           },
           scales: {
-            x: { title: { display: true, text: "x" } },
-            y: { title: { display: true, text: "f(x)" } }
+            x: {
+              title: {
+                display: true,
+                text: "x",
+                font: {
+                  family: 'Inter',
+                  size: 16,
+                  weight: '500'
+                }
+              },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.1)',
+                lineWidth: 1
+              },
+              ticks: {
+                font: {
+                  size: 12
+                },
+                padding: 10
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: "f(x)",
+                font: {
+                  family: 'Inter',
+                  size: 16,
+                  weight: '500'
+                }
+              },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.1)',
+                lineWidth: 1
+              },
+              ticks: {
+                font: {
+                  size: 12
+                },
+                padding: 10
+              }
+            }
+          },
+          animation: {
+            duration: 2000,
+            easing: 'easeOutQuart'
+          },
+          elements: {
+            point: {
+              radius: 8,
+              hoverRadius: 12,
+              borderWidth: 3
+            },
+            line: {
+              borderWidth: 4
+            }
           }
         }
       });
@@ -277,34 +799,93 @@
 
     function handleFile(event) {
       const file = event.target.files[0];
+      if (!file) return;
+
+      const fileLabel = document.querySelector('.file-input-label span');
+      fileLabel.textContent = `File dipilih: ${file.name}`;
+      
       const reader = new FileReader();
 
       reader.onload = function(e) {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-        // Asumsikan format: kolom pertama = x, kolom kedua = f(x)
-        const xData = [];
-        const fxData = [];
+          const xData = [];
+          const fxData = [];
 
-        jsonData.forEach((row, index) => {
-          if (row.length >= 2 && !isNaN(row[0]) && !isNaN(row[1])) {
-            xData.push(row[0]);
-            fxData.push(row[1]);
+          jsonData.forEach((row, index) => {
+            if (row.length >= 2 && !isNaN(row[0]) && !isNaN(row[1])) {
+              xData.push(row[0]);
+              fxData.push(row[1]);
+            }
+          });
+
+          if (xData.length > 0 && fxData.length > 0) {
+            document.getElementById("xVals").value = xData.join(", ");
+            document.getElementById("fxVals").value = fxData.join(", ");
+            
+            // Animasi sukses
+            fileLabel.textContent = "✓ Data berhasil dimuat!";
+            fileLabel.style.color = "#48bb78";
+            
+            setTimeout(() => {
+              fileLabel.textContent = "Pilih file atau drag & drop";
+              fileLabel.style.color = "";
+            }, 3000);
+          } else {
+            throw new Error("Format data tidak valid");
           }
-        });
-
-        // Set ke textarea otomatis
-        document.getElementById("xVals").value = xData.join(",");
-        document.getElementById("fxVals").value = fxData.join(",");
-
-        alert("Data berhasil dimuat dari file!");
+        } catch (error) {
+          alert("Error membaca file: " + error.message);
+          fileLabel.textContent = "Pilih file atau drag & drop";
+        }
       };
 
       reader.readAsArrayBuffer(file);
+    }
+
+    // Drag and drop functionality
+    const fileInputWrapper = document.querySelector('.file-input-wrapper');
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      fileInputWrapper.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      fileInputWrapper.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      fileInputWrapper.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight(e) {
+      fileInputWrapper.classList.add('drag-over');
+    }
+
+    function unhighlight(e) {
+      fileInputWrapper.classList.remove('drag-over');
+    }
+
+    fileInputWrapper.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      
+      if (files.length > 0) {
+        document.getElementById('fileUpload').files = files;
+        handleFile({ target: { files: files } });
+      }
     }
   </script>
 </body>
